@@ -1,0 +1,315 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>
+  body {
+    padding: 100px;
+    width: 1000px;
+    margin: auto;
+    text-align: left;
+    font-weight: 300;
+    font-family: 'Open Sans', sans-serif;
+    color: #121212;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Source Sans Pro', sans-serif;
+  }
+</style>
+<title>CS 184/284A Rasterizer</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+
+<body>
+
+<h1 align="middle">CS 184/284A: Computer Graphics and Imaging, Spring 2024</h1>
+<h1 align="middle">Homework 1: Rasterizer</h1>
+<h2 align="middle">Charles Cai</h2>
+
+<br>
+
+<div>
+
+<h2 align="middle">Overview</h2>
+<p>
+  In this homework, I first implemented a simple rasterizer. We can use 2 method to determine whether a pixel is inside the triangle, one is the three line method, the other is the barycentric coordinates.
+  Then I implemented a supersampling algorithm to antialiase, I actually have a hard time doing that, because I have to make sure I up-scale and down-scale the resolution correctly.
+  <br><br>
+  After that, I updated the robot.svg to make the cubeman show his muscles by rotating and translating his forearms.
+  <br><br>
+  After that, I implemented the pixel sampling and level sampling for texture mapping. I have a great time doing this part,
+  really learned a lot about the nature of mipmap and how it works. Also got really comfortable playing with lerp.
+</p>
+
+<h2 align="middle">Section I: Rasterization</h2>
+
+<h3 align="middle">Part 1: Rasterizing single-color triangles</h3>
+
+
+<p>
+  For this part, I implemented a simple trangle rasterization algorithm.
+  <br>
+  <br>
+  The algorithm is:
+  <br>
+  1. Find the bounds of the triangle by calculate the minimum and maximum x and y values of the vertices.
+  <br>
+  2. Iterate through all the pixels in the trangle bounds.
+  <br>
+  3. Determine whether the pixel is inside the triangle by the three lines method.
+  <br>
+  4. If inside, then the pixel should be colored.
+  <br>
+  <br>
+  This algorithm is no worse than one that checks each sample within the bounding box of the triangle because it just checks the pixels inside the triangle bounds.
+  <br>
+  <br>
+  Here is a screenshot of basic/test4.svg:
+  <br>
+  <br>
+  <div align="middle">
+    <img src="images/task1.png" align="middle" width="400px"/>
+  </div>
+
+
+<!-- <p>Here is an example 2x2 gridlike structure using an HTML table. Each <b>tr</b> is a row and each <b>td</b> is a column in that row. You might find this useful for framing and showing your result images in an organized fashion.</p> -->
+
+<!-- <div align="middle">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="images/image1.png" align="middle" width="400px"/>
+        <figcaption align="middle">Caption goes here.</figcaption>
+      </td>
+      <td>
+        <img src="images/image2.png" align="middle" width="400px"/>
+        <figcaption align="middle">Caption goes here.</figcaption>
+      </td>
+    </tr>
+    <br>
+    <tr>
+      <td>
+        <img src="images/image3.png" align="middle" width="400px"/>
+        <figcaption align="middle">Caption goes here.</figcaption>
+      </td>
+      <td>
+        <img src="images/image4.png" align="middle" width="400px"/>
+        <figcaption align="middle">Caption goes here.</figcaption>
+      </td>
+    </tr>
+  </table>
+</div> -->
+
+<br>
+<br>
+<h3 align="middle">Part 2: Antialiasing triangles</h3>
+
+<p>
+  For this part, I implemented a traditional supersampling algorithm.
+  <br>
+  <br>
+  Supersampling is useful because it first renders the image at a higher resolution and then dwonsamples to original resolution,
+  this can help to reduce the aliasing effect.
+  <br>
+  The modifications I made to the rasterization pipeline are:
+  <br>
+  1. Change the sample_rate size to be width * height * sample_rate.
+  <br>
+  2. Scale the pixel coordinates to the sqrt(sample_rate) size to get the higher resolution image.
+  <br>
+  3. Change fill_pixel function to fill the color of the samples in the pixel (Also scaled to sqrt(sample_rate)).
+  <br>
+  4. Downsampling: Change the relove_to_buffer function to average the color of the sqrt(sample_rate) * sqrt(sample_rate) 'small pixel's to filled in original scaled pixel.
+  <br>
+  <br>
+  Here is a screenshot of basic/test4.svg with the default viewing parameters and sample rates 1, 4, 9 and 16 to compare them side-by-side:
+  <br>
+  <div align="middle">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="images/task2rate1.png" align="middle" width="400px"/>
+        <figcaption align="middle">Supersampling with sample rate at 1</figcaption>
+      </td>
+      <td>
+        <img src="images/task2rate4.png" align="middle" width="400px"/>
+        <figcaption align="middle">Supersampling with sample rate at 4</figcaption>
+      </td>
+    </tr>
+    <br>
+    <tr>
+      <td>
+        <img src="images/task2rate9.png" align="middle" width="400px"/>
+        <figcaption align="middle">Supersampling with sample rate at 9</figcaption>
+      </td>
+      <td>
+        <img src="images/task2rate16.png" align="middle" width="400px"/>
+        <figcaption align="middle">Supersampling with sample rate at 16</figcaption>
+      </td>
+    </tr>
+  </table>
+</div>
+
+
+<br>
+<br>
+<h3 align="middle">Part 3: Transforms</h3>
+<p>
+  I updated the robot.svg, to make the cubeman show his muscles by rotating and translating his forearms.
+  <br>
+  <br>
+  Here is a screenshot of my_robot.svg:
+  <br>
+  <br>
+  <div align="middle">
+    <img src="images/myrobot.png" align="middle" width="400px"/>
+  </div>
+
+
+  <br>
+  <br>
+<h2 align="middle">Section II: Sampling</h2>
+<h3 align="middle">Part 4: Barycentric coordinates</h3>
+<p>
+  In my view, barycentric coordinates are a set of three numbers that represent the position of a point in a triangle.
+  The barycentric coordinates of a "weighted-average" point in a triangle are the weights of the vertices of the triangle that sum to 1.
+  So it's like a 3 dimensional coordinate system, but the three coordinates sum to 1.
+  <br>
+  <br>
+  Here is a single triangle with one red, one green, and one blue vertex, which should produce a smoothly blended color triangle:
+  <div align="middle">
+    <img src="images/task4tri.png" align="middle" width="400px"/>
+  </div>
+  <br>
+  Here is a screenshot of svg/basic/test7.svg with default viewing parameters and sample rate 1:
+  <br>
+  <br>
+  <div align="middle">
+    <img src="images/task4main.png" align="middle" width="400px"/>
+  </div>
+
+<br>
+<br>
+<h3 align="middle">Part 5: "Pixel sampling" for texture mapping</h3>
+<p>
+  Pixel sampling is just to sample the color of a texture at a point in the texture.
+  <br>
+  <br>
+  In the algorithm, I first using the barycentric coordinates to find the texture coordinates of the point in the triangle.
+  Then I use the texture coordinates to find the color of texel at that point.
+  <br>
+  <br>
+  The two pixel sampling methods are:
+  <br>
+  1. Nearest sampling: Simply takes the color of the texel closest to the texture coordinates.
+  <br>
+  2. Bilinear sampling: Do two lerps(linear interpolation) by taking the weighted average of the colors of the four texels closest to the texture coordinates, weighted by the distance from the texture coordinates.
+  <br>
+  <br>
+  Here is a screenshot of svg/texmap/earth.svg with nearest sampling at 1 sample per pixel, nearest sampling at 16 samples per pixel, bilinear sampling at 1 sample per pixel, and bilinear sampling at 16 samples per pixel:
+  <br>
+  <br>
+  <div align="middle">
+    <table style="width=100%">
+      <tr>
+        <td>
+          <img src="images/nearrate1.png" align="middle" width="400px"/>
+          <figcaption align="middle">Nearest sampling at rate 1</figcaption>
+        </td>
+        <td>
+          <img src="images/nearrate16.png" align="middle" width="400px"/>
+          <figcaption align="middle">Nearest sampling at rate 16</figcaption>
+        </td>
+      </tr>
+      <br>
+      <tr>
+        <td>
+          <img src="images/bilirate1.png" align="middle" width="400px"/>
+          <figcaption align="middle">Bilinear sampling at rate 1</figcaption>
+        </td>
+        <td>
+          <img src="images/bilirate16.png" align="middle" width="400px"/>
+          <figcaption align="middle">Bilinear sampling at rate 16</figcaption>
+        </td>
+      </tr>
+    </table>
+  </div>
+  <br>
+  We can see that when the sample_rate is 1 (or low), the nearest sampling and bilinear sampling have similar effects.
+  But as the sample_rate gets higher, the bilinear sampling is way better than the nearest sampling.
+  
+
+<br>
+<br>
+<br>
+<br>
+<h3 align="middle">Part 6: "Level sampling" with mipmaps for texture mapping</h3>
+<p>
+  Level sampling brings an important concept called mipmaps, which is a set of textures with different resolutions.
+  Thus with only 4/3 times the memory, we can get a better texture mapping effect. 
+  <br>
+  The first step after we have a mipmap is to calculate the barycentric coordinates of the point in the triangle.
+  <br>
+  Then we use the barycentric coordinates to find the texture coordinates of the point in the triangle in texture space (a.k.a. uv space).
+  <br>
+  Then we calculate the level of the mipmap we want.
+  <br>
+  Finally, we use the texture coordinates and the level to find the color of the texel at that point.
+  <br>
+  <br>
+  My algorithm is:
+  <br>
+  1. First calculate the barycentric coordinates of the point in the triangle.
+  <br>
+  2. Then I use the barycentric coordinates to find the texture coordinates of the point in the triangle in texture space (a.k.a. uv space).
+  <br>
+  3. After that, if the level sample method is L_ZERO, I just use the texture coordinates to find the color of the texel at that point.
+  <br>
+  4. Else if the level sample method is L_NEAREST, I use the texture coordinates to find the color of the texel at that point in the mipmap level that is closest to the original texture coordinates. So I rounded the final level to integer to get the final level.
+  <br>
+  5. Else if the level sample method is L_LINEAR, I use the texture coordinates to find the color of the texel at that point in mipmap, this time I directly return a float. Then I perform a lerp between the two colors of the two levels to get the final level.
+  <br>
+  6. After that, I use the texture coordinates and the level to find the color of the texel at that point.
+  <br>
+  <br>
+  Tradeoff analysis for pixel sampling, level sampling, or the number of samples per pixel:
+  <br>
+  Speed: Pixel sampling > Level sampling > Number of samples per pixel
+  <br>
+  Memory Usage: Number of samples per pixel (sample_rate * original) > Level sampling ((4/3) * original) > Pixel sampling (original)
+  <br>
+  Antialiasing Power: Number of samples per pixel > Level sampling > Pixel sampling
+  <br>
+  <br>
+  Here is a screenshot of a colored apple logo with L_ZERO & P_NEAREST, L_ZERO & P_LINEAR, L_NEAREST & P_NEAREST, and L_NEAREST & P_LINEAR:
+  <div align="middle">
+    <table style="width=100%">
+      <tr>
+        <td>
+          <img src="images/zeronear.png" align="middle" width="400px"/>
+          <figcaption align="middle">L_ZERO & P_NEAREST</figcaption>
+        </td>
+        <td>
+          <img src="images/zerobilinear.png" align="middle" width="400px"/>
+          <figcaption align="middle">L_ZERO & P_LINEAR</figcaption>
+        </td>
+      </tr>
+      <br>
+      <tr>
+        <td>
+          <img src="images/nearnear.png" align="middle" width="400px"/>
+          <figcaption align="middle">L_NEAREST & P_NEAREST</figcaption>
+        </td>
+        <td>
+          <img src="images/nearbilinear.png" align="middle" width="400px"/>
+          <figcaption align="middle">L_NEAREST & P_LINEAR</figcaption>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+
+
+</body>
+</html>
